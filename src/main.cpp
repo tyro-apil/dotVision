@@ -39,7 +39,7 @@ bool nextPressed=false;
 
 volatile unsigned long lastPrevInterruptTime = 0;
 volatile unsigned long lastNextInterruptTime = 0;
-#define DEBOUNCE_DELAY 100
+#define DEBOUNCE_DELAY 200
 
 
 // POSITION CONTROL
@@ -118,6 +118,9 @@ void setup() {
   // INIT ENCODER PINS
   pinMode(MOTOR1_ENC1, INPUT);
   pinMode(MOTOR1_ENC2, INPUT);
+
+  pinMode(MOTOR2_ENC1, INPUT);
+  pinMode(MOTOR2_ENC2, INPUT);
 
   attachInterrupt(digitalPinToInterrupt(MOTOR1_ENC1),readEncoderCount1,RISING);
   attachInterrupt(digitalPinToInterrupt(MOTOR2_ENC1),readEncoderCount2,RISING);
@@ -207,7 +210,7 @@ void loop() {
   // targetCount1 = map(targetAngle1, 0, 360, 0, PPR1);
   targetCount1 = (int)((targetAngle1/angle)*PPR1);
 
-  targetCount2 = (int)((targetAngle2/angle)*PPR1);
+  targetCount2 = (int)((targetAngle2/angle)*PPR2);
 
   // Compute PID
   setpoint1 = targetCount1;
