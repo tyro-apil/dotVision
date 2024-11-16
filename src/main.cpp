@@ -21,13 +21,23 @@ void reconnect_wifi();
 void reconnect_mqtt();
 void callback(char*, byte*, unsigned int);
 
+void IRAM_ATTR prevCallback();
+void IRAM_ATTR nextCallback();
+
 
 #define DEBUG
 const long MONITOR_BAUD_RATE = 115200;
 
 // PUSH BUTTONS
-#define PREV 1
-#define NEXT 2
+#define PREV 16
+#define NEXT 17
+
+bool prevPressed=false;
+bool nextPressed=false;
+
+volatile unsigned long lastPrevInterruptTime = 0;
+volatile unsigned long lastNextInterruptTime = 0;
+#define DEBOUNCE_DELAY 100
 
 
 // POSITION CONTROL
@@ -134,8 +144,11 @@ void setup() {
   client.subscribe(dataTopic);
 
   // INPUTS
-  pinMode(PREV, INPUT_PULLUP);
-  pinMode(NEXT, INPUT_PULLUP);
+  pinMode(PREV, INPUT);
+  pinMode(NEXT, INPUT);
+
+  attachInterrupt(digitalPinToInterrupt(PREV), prevCallback, RISING);
+  attachInterrupt(digitalPinToInterrupt(NEXT), nextCallback, RISING);
 
 }
 
@@ -183,6 +196,16 @@ void loop() {
       Serial.println("Reconnecting");
     #endif
     reconnect_wifi();
+  }
+
+  if (prevPressed){
+    Serial.println("10");
+    client.publish(controlTopic, "10");
+    prevPressed=false;
+  }
+  if (nextPressed){
+    client.publish(controlTopic, "01");
+    nextPressed=false;
   }
 }
 
@@ -263,4 +286,21 @@ void callback(char *topic, byte *payload, unsigned int length) {
     // Serial.print("Target Angle: ");
     // Serial.println(targetAngle);
   #endif
+}
+
+void IRAM_ATTR prevCallback(){
+  unsigned long currentTime = millis();
+  if (currentTime - lastPrevInterruptTime > DEBOUNCE_DELAY) {
+    prevPressed = true;
+    lastPrevInterruptTime = currentTime;
+  }
+
+}
+
+void IRAM_ATTR nextCallback(){
+  unsigned long currentTime = millis();
+  if (currentTime - lastNextInterruptTime > DEBOUNCE_DELAY) {
+    nextPressed = true;
+    lastNextInterruptTime = currentTime;
+  }
 }
