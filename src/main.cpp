@@ -9,10 +9,11 @@
 
 // User defined functions declaration
 // Position Control
-void readEncoder();
-void forward();
-void reverse();
-void pwmOut(int);
+void readEncoderCount1();
+void readEncoderCount2();
+void forward(int in1, int in2);
+void reverse(int in1, int in2);
+void pwmOut(int in1, int in2, int en, int out);
 
 
 
@@ -43,27 +44,43 @@ volatile unsigned long lastNextInterruptTime = 0;
 
 // POSITION CONTROL
 // Pins to motor driver
-#define IN1 18
-#define IN2 19
-#define PWM 23
+#define MOTOR1_IN1 18
+#define MOTOR1_IN2 19
+#define MOTOR1_PWM 23
+
+#define MOTOR2_IN1 32
+#define MOTOR2_IN2 33
+#define MOTOR2_PWM 27
 
 // Encoder Pins
-#define ENC1 25
-#define ENC2 26
+#define MOTOR1_ENC1 25
+#define MOTOR1_ENC2 26
 
-volatile int encoderCount = 0; 
-const int PPR=150;
+#define MOTOR2_ENC1 13
+#define MOTOR2_ENC2 14
+
+volatile int encoderCount1 = 0; 
+volatile int encoderCount2 = 0; 
+const int PPR1=150;
+const int PPR2=150;
 const float angle=360.0;
 const int units=8;
 const float unitAngle=angle/units;
 
-float targetAngle=0;
-int targetCount=0;
+float targetAngle1=0;
+int targetCount1=0;
+
+float targetAngle2=0;
+int targetCount2=0;
 
 // PID define
-double kp = 3.5 , ki = 0.5 , kd = 0.05;            
-double input = 0, output = 0, setpoint = 0;
-PID myPID(&input, &output, &setpoint, kp, ki, kd, DIRECT);  
+double kp1 = 3.5 , ki1 = 0.5 , kd1 = 0.05;            
+double input1 = 0, output1 = 0, setpoint1 = 0;
+PID myPID1(&input1, &output1, &setpoint1, kp1, ki1, kd1, DIRECT);  
+
+double kp2 = 3.5 , ki2 = 0.5 , kd2 = 0.05;            
+double input2 = 0, output2 = 0, setpoint2 = 0;
+PID myPID2(&input2, &output2, &setpoint2, kp2, ki2, kd2, DIRECT);  
 
 // target change time
 // unsigned long prevT=millis();
@@ -99,20 +116,29 @@ void setup() {
   #endif
 
   // INIT ENCODER PINS
-  pinMode(ENC1, INPUT);
-  pinMode(ENC2, INPUT);
+  pinMode(MOTOR1_ENC1, INPUT);
+  pinMode(MOTOR1_ENC2, INPUT);
 
-  attachInterrupt(digitalPinToInterrupt(ENC1),readEncoder,RISING);
+  attachInterrupt(digitalPinToInterrupt(MOTOR1_ENC1),readEncoderCount1,RISING);
+  attachInterrupt(digitalPinToInterrupt(MOTOR2_ENC1),readEncoderCount2,RISING);
 
   // INIT MOTOR DRIVER PINS
-  pinMode(IN1, OUTPUT);
-  pinMode(IN2, OUTPUT);
-  pinMode(PWM, OUTPUT);
+  pinMode(MOTOR1_IN1, OUTPUT);
+  pinMode(MOTOR1_IN2, OUTPUT);
+  pinMode(MOTOR1_PWM, OUTPUT);
+
+  pinMode(MOTOR2_IN1, OUTPUT);
+  pinMode(MOTOR2_IN2, OUTPUT);
+  pinMode(MOTOR2_PWM, OUTPUT);
 
   // SET PID
-  myPID.SetMode(AUTOMATIC);
-  myPID.SetSampleTime(1);
-  myPID.SetOutputLimits(-150, 150);
+  myPID1.SetMode(AUTOMATIC);
+  myPID1.SetSampleTime(1);
+  myPID1.SetOutputLimits(-150, 150);
+
+  myPID2.SetMode(AUTOMATIC);
+  myPID2.SetSampleTime(1);
+  myPID2.SetOutputLimits(-150, 150);
 
   // Init wifi connection
   WiFi.mode(WIFI_STA);
@@ -167,34 +193,49 @@ void loop() {
   // currT = millis();
 
   // if (currT - prevT > interval){
-  //   if (targetAngle < 360.0){
-  //     targetAngle+=unitAngle;
+  //   if (targetAngle1 < 360.0){
+  //     targetAngle1+=unitAngle;
   //   }
   //   else{
-  //     targetAngle=0.0;
-  //     encoderCount=0;
+  //     targetAngle1=0.0;
+  //     encoderCount1=0;
   //   }
   //   prevT=currT;
   // }
 
   // Map angle to PPR
-  // targetCount = map(targetAngle, 0, 360, 0, PPR);
-  targetCount = (int)((targetAngle/angle)*PPR);
+  // targetCount1 = map(targetAngle1, 0, 360, 0, PPR1);
+  targetCount1 = (int)((targetAngle1/angle)*PPR1);
+
+  targetCount2 = (int)((targetAngle2/angle)*PPR1);
 
   // Compute PID
-  setpoint = targetCount;
-  input = encoderCount;
+  setpoint1 = targetCount1;
+  input1 = encoderCount1;
 
-  myPID.Compute();
-  pwmOut(output);
+  setpoint2 = targetCount2;
+  input2 = encoderCount2;
+
+  myPID1.Compute();
+  pwmOut(MOTOR1_IN1, MOTOR1_IN2, MOTOR1_PWM, output1);
+
+  myPID2.Compute();
+  pwmOut(MOTOR2_IN1, MOTOR2_IN2, MOTOR2_PWM, output2);
 
   #ifdef DEBUG
-    Serial.print("setpoint: ");
-    Serial.print(setpoint);
-    Serial.print(" input: ");
-    Serial.print(input);
-    Serial.print(" output: ");
-    Serial.println(output);
+    Serial.print("setpoint1: ");
+    Serial.print(setpoint1);
+    Serial.print(" input1: ");
+    Serial.print(input1);
+    Serial.print(" output1: ");
+    Serial.println(output1);
+
+    Serial.print("setpoint2: ");
+    Serial.print(setpoint2);
+    Serial.print(" input2: ");
+    Serial.print(input2);
+    Serial.print(" output2: ");
+    Serial.println(output2);
   #endif
 
   // // MQTT
@@ -218,36 +259,46 @@ void loop() {
 }
 
 
-void readEncoder(){
-  int b = digitalRead(ENC2);
+void readEncoderCount1(){
+  int b = digitalRead(MOTOR1_ENC2);
   if(b > 0){
-    encoderCount++;
+    encoderCount1++;
   }
   else{
-    encoderCount--;
+    encoderCount1--;
   }
 }
 
-void pwmOut(int out) {                               
-  analogWrite(PWM, abs(out));         
+void readEncoderCount2(){
+  int b = digitalRead(MOTOR2_ENC2);
+  if(b > 0){
+    encoderCount2++;
+  }
+  else{
+    encoderCount2--;
+  }
+}
+
+void pwmOut(int in1, int in2, int en, int out) {                               
+  analogWrite(en, abs(out));         
   if (out > 0) {                           
     // forward(); 
-    reverse();  
+    reverse(in1, in2);  
   }
   else {
     // reverse();  
-    forward();                          
+    forward(in1, in2);                          
   }
 }
 
-void forward () {
-  digitalWrite(IN1, HIGH); 
-  digitalWrite(IN2, LOW); 
+void forward (int in1, int in2) {
+  digitalWrite(in1, HIGH); 
+  digitalWrite(in2, LOW); 
 }
 
-void reverse () {
-  digitalWrite(IN1, LOW); 
-  digitalWrite(IN2, HIGH); 
+void reverse (int in1, int in2) {
+  digitalWrite(in1, LOW); 
+  digitalWrite(in2, HIGH); 
 }
 
 
@@ -289,10 +340,10 @@ void callback(char *topic, byte *payload, unsigned int length) {
   String targetString = getBraille(receivedPayload[0], brailleMap);
   String part1, part2;
   divideString(targetString, part1, part2);
-  targetAngle=greyCode2angle(part1);
+  targetAngle1=greyCode2angle(part1);
   #ifdef DEBUG
     // Serial.print("Target Angle: ");
-    // Serial.println(targetAngle);
+    // Serial.println(targetAngle1);
   #endif
 }
 
