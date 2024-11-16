@@ -341,6 +341,7 @@ void callback(char *topic, byte *payload, unsigned int length) {
   String part1, part2;
   divideString(targetString, part1, part2);
   targetAngle1=greyCode2angle(part1);
+  targetAngle2=greyCode2angle(part2);
   #ifdef DEBUG
     // Serial.print("Target Angle: ");
     // Serial.println(targetAngle1);
