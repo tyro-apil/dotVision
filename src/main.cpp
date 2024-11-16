@@ -44,20 +44,20 @@ volatile unsigned long lastNextInterruptTime = 0;
 
 // POSITION CONTROL
 // Pins to motor driver
-#define MOTOR1_IN1 18
-#define MOTOR1_IN2 19
-#define MOTOR1_PWM 23
+#define MOTOR2_IN1 18
+#define MOTOR2_IN2 19
+#define MOTOR2_PWM 23
 
-#define MOTOR2_IN1 32
-#define MOTOR2_IN2 33
-#define MOTOR2_PWM 27
+#define MOTOR1_IN1 32
+#define MOTOR1_IN2 33
+#define MOTOR1_PWM 27
 
 // Encoder Pins
-#define MOTOR1_ENC1 25
-#define MOTOR1_ENC2 26
+#define MOTOR2_ENC1 25
+#define MOTOR2_ENC2 26
 
-#define MOTOR2_ENC1 13
-#define MOTOR2_ENC2 14
+#define MOTOR1_ENC1 13
+#define MOTOR1_ENC2 14
 
 volatile int encoderCount1 = 0; 
 volatile int encoderCount2 = 0; 
