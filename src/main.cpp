@@ -24,6 +24,7 @@ void callback(char*, byte*, unsigned int);
 void IRAM_ATTR prevCallback();
 void IRAM_ATTR nextCallback();
 
+void sendControlMessage(void * pvParameters);
 
 #define DEBUG
 const long MONITOR_BAUD_RATE = 115200;
@@ -150,6 +151,14 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(PREV), prevCallback, RISING);
   attachInterrupt(digitalPinToInterrupt(NEXT), nextCallback, RISING);
 
+  xTaskCreatePinnedToCore(
+    sendControlMessage,   /* Task function. */
+    "sendControlMessage",     /* name of task. */
+    10000,       /* Stack size of task */
+    NULL,        /* parameter of the task */
+    1,           /* priority of the task */
+    NULL,        /* Task handle to keep track of created task */
+    1);          /* pin task to core 1 */
 }
 
 void loop() {
@@ -180,33 +189,32 @@ void loop() {
   pwmOut(output);
 
   #ifdef DEBUG
-    // Serial.print("setpoint: ");
-    // Serial.print(setpoint);
-    // Serial.print(" input: ");
-    // Serial.print(input);
-    // Serial.print(" output: ");
-    // Serial.println(output);
+    Serial.print("setpoint: ");
+    Serial.print(setpoint);
+    Serial.print(" input: ");
+    Serial.print(input);
+    Serial.print(" output: ");
+    Serial.println(output);
   #endif
 
-  // MQTT
-  client.loop();
-  if (WiFi.status() != WL_CONNECTED) {
-    #ifdef DEBUG
-      Serial.println("Wifi connection lost...");
-      Serial.println("Reconnecting");
-    #endif
-    reconnect_wifi();
-  }
+  // // MQTT
+  // client.loop();
+  // if (WiFi.status() != WL_CONNECTED) {
+  //   #ifdef DEBUG
+  //     Serial.println("Wifi connection lost...");
+  //     Serial.println("Reconnecting");
+  //   #endif
+  //   reconnect_wifi();
+  // }
 
-  if (prevPressed){
-    Serial.println("10");
-    client.publish(controlTopic, "10");
-    prevPressed=false;
-  }
-  if (nextPressed){
-    client.publish(controlTopic, "01");
-    nextPressed=false;
-  }
+  // if (prevPressed){
+  //   client.publish(controlTopic, "10");
+  //   prevPressed=false;
+  // }
+  // if (nextPressed){
+  //   client.publish(controlTopic, "01");
+  //   nextPressed=false;
+  // }
 }
 
 
@@ -291,6 +299,7 @@ void callback(char *topic, byte *payload, unsigned int length) {
 void IRAM_ATTR prevCallback(){
   unsigned long currentTime = millis();
   if (currentTime - lastPrevInterruptTime > DEBOUNCE_DELAY) {
+    // client.publish(controlTopic, "10");
     prevPressed = true;
     lastPrevInterruptTime = currentTime;
   }
@@ -300,7 +309,33 @@ void IRAM_ATTR prevCallback(){
 void IRAM_ATTR nextCallback(){
   unsigned long currentTime = millis();
   if (currentTime - lastNextInterruptTime > DEBOUNCE_DELAY) {
+    // client.publish(controlTopic, "01");
+
     nextPressed = true;
     lastNextInterruptTime = currentTime;
+  }
+}
+
+void sendControlMessage(void * pvParameters){
+  while(1){
+    if (prevPressed){
+      client.publish(controlTopic, "10");
+      prevPressed=false;
+    }
+    if (nextPressed){
+      client.publish(controlTopic, "01");
+      nextPressed=false;
+    }
+
+     // MQTT
+  client.loop();
+  if (WiFi.status() != WL_CONNECTED) {
+    #ifdef DEBUG
+      Serial.println("Wifi connection lost...");
+      Serial.println("Reconnecting");
+    #endif
+    reconnect_wifi();
+  }
+    // vTaskDelay(DEBOUNCE_DELAY);
   }
 }
