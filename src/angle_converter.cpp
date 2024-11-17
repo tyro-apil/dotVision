@@ -14,16 +14,17 @@ int greyCode2angle(const String& partinput) {
     if (partinput == "000") {
         return 0;
     } else if (partinput == "001") {
-        return 45;
+        // return 45;
+        return 315;
     } else if (partinput == "011") {
         // return 90;
-        return 180;
+        return 270;
     } else if (partinput == "010") {
         // return 135;
         return 225;
     } else if (partinput == "110") {
         // return 180;
-        return 270;
+        return 180;
     } else if (partinput == "111") {
         // return 225;
         return 135;
@@ -31,7 +32,8 @@ int greyCode2angle(const String& partinput) {
         // return 270;
         return 90;
     } else if (partinput == "100") {
-        return 315;
+        // return 315;
+        return 45;
     } else {
         return 0;
     }
