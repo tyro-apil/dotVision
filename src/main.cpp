@@ -78,7 +78,7 @@ double kp1 = 3.5 , ki1 = 0.5 , kd1 = 0.05;
 double input1 = 0, output1 = 0, setpoint1 = 0;
 PID myPID1(&input1, &output1, &setpoint1, kp1, ki1, kd1, DIRECT);  
 
-double kp2 = 3.5 , ki2 = 0.5 , kd2 = 0.05;            
+double kp2 = 4.0 , ki2 = 0.5 , kd2 = 0.005;            
 double input2 = 0, output2 = 0, setpoint2 = 0;
 PID myPID2(&input2, &output2, &setpoint2, kp2, ki2, kd2, DIRECT);  
 
@@ -226,12 +226,12 @@ void loop() {
   pwmOut(MOTOR2_IN1, MOTOR2_IN2, MOTOR2_PWM, output2);
 
   #ifdef DEBUG
-    Serial.print("setpoint1: ");
-    Serial.print(setpoint1);
-    Serial.print(" input1: ");
-    Serial.print(input1);
-    Serial.print(" output1: ");
-    Serial.println(output1);
+    // Serial.print("setpoint1: ");
+    // Serial.print(setpoint1);
+    // Serial.print(" input1: ");
+    // Serial.print(input1);
+    // Serial.print(" output1: ");
+    // Serial.println(output1);
 
     Serial.print("setpoint2: ");
     Serial.print(setpoint2);
