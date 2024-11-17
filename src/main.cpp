@@ -391,6 +391,6 @@ void sendControlMessage(void * pvParameters){
     #endif
     reconnect_wifi();
   }
-    // vTaskDelay(DEBOUNCE_DELAY);
+    vTaskDelay(DEBOUNCE_DELAY);
   }
 }
