@@ -36,6 +36,7 @@ const long MONITOR_BAUD_RATE = 115200;
 
 bool prevPressed=false;
 bool nextPressed=false;
+bool messageReceived=false;
 
 volatile unsigned long lastPrevInterruptTime = 0;
 volatile unsigned long lastNextInterruptTime = 0;
@@ -345,6 +346,8 @@ void callback(char *topic, byte *payload, unsigned int length) {
   divideString(targetString, part1, part2);
   targetAngle1=greyCode2angle(part1);
   targetAngle2=greyCode2angle(part2);
+
+  messageReceived=true;
   #ifdef DEBUG
     // Serial.print("Target Angle: ");
     // Serial.println(targetAngle1);
@@ -374,13 +377,34 @@ void IRAM_ATTR nextCallback(){
 void sendControlMessage(void * pvParameters){
   while(1){
     if (prevPressed){
+      #ifdef DEBUG
+        // Serial.println("Prev pressed");
+      #endif
       client.publish(controlTopic, "10");
       prevPressed=false;
     }
     if (nextPressed){
+      #ifdef DEBUG
+        // Serial.println("Next pressed");
+      #endif
       client.publish(controlTopic, "01");
       nextPressed=false;
     }
+
+    // Wait for the response on the "data/characters" topic
+    // while (!messageReceived) {
+      // client.loop();
+      // if (WiFi.status() != WL_CONNECTED) {
+      //   #ifdef DEBUG
+      //     Serial.println("Wifi connection lost...");
+      //     Serial.println("Reconnecting");
+      //   #endif
+      //   reconnect_wifi();
+      // }
+      // vTaskDelay(10 / portTICK_PERIOD_MS); // Small delay to avoid busy-waiting
+    // }
+
+    // messageReceived=false;
 
      // MQTT
   client.loop();
